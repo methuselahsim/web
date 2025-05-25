@@ -1,6 +1,6 @@
 const API_URL = 'https://73.189.237.188:8443/api/forum';
 const UPLOADS_URL = 'https://73.189.237.188:8443/Uploads';
-
+console.log('forum.js loaded at ' + new Date().toISOString());
 function loadForum() {
   fetch(API_URL)
     .then(response => response.json())
