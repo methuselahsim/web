@@ -1,0 +1,92 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forum</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+    .forum-form, .reply-form { margin-bottom: 20px; padding: 10px; background: white; border: 1px solid #ccc; }
+    input, textarea { display: block; width: 100%; margin: 10px 0; padding: 8px; }
+    button { padding: 8px 16px; background: #007bff; color: white; border: none; cursor: pointer; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .message-thread { margin: 10px 0; padding: 10px; background: white; border: 1px solid #ccc; }
+    .reply-message { margin-left: 20px; border-left: 2px solid #007bff; padding-left: 10px; }
+    .message-image img { max-width: 200px; margin-top: 10px; }
+    .error-message { color: red; padding: 10px; }
+    .form-message { position: fixed; top: 20px; right: 20px; padding: 10px; border: 1px solid; }
+    .form-message.success { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+    .form-message.error { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+  </style>
+</head>
+<body>
+  <h1>Community Forum</h1>
+
+  <div class="forum-form">
+    <h3>New Thread</h3>
+    <form id="forumForm" enctype="multipart/form-data">
+      <textarea name="message" placeholder="Your Message" required></textarea>
+      <input type="file" name="image" accept="image/*">
+      <button type="submit">Post Message</button>
+    </form>
+  </div>
+
+  <div id="forumMessages">
+    Loading messages...
+  </div>
+
+  <div id="replyModal" style="display: none;">
+    <div class="reply-form">
+      <h3>Reply to Message</h3>
+      <form id="replyForm" enctype="multipart/form-data">
+        <textarea name="message" placeholder="Your Reply" required></textarea>
+        <input type="file" name="image" accept="image/*">
+        <input type="hidden" id="parentId" name="parent_id">
+        <button type="submit">Post Reply</button>
+        <button type="button" onclick="closeReplyForm()">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/forum.js"></script>
+</body>
+</html>
