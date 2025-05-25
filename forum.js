@@ -1,5 +1,5 @@
-const API_URL = 'http://<your-public-ip>:8080/api/forum';
-  const UPLOADS_URL = 'http://<your-public-ip>:8080/Uploads';
+const API_URL = 'http://73.189.237.188:8080/api/forum';
+  const UPLOADS_URL = 'http://73.189.237.188:8080/Uploads';
 
   function loadForum() {
     fetch(API_URL)
